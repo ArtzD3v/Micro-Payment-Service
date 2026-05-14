@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  bio       String?
+  avatarUrl String?  @map("avatar_url")
+  // Balance stored in cents (integer) to avoid floating point precision errors
+  // Example: R$ 10,50 = 1050 cents
+  balance   Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sentTransactions     Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
+
+  @@map("users")
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  // Amount in cents (integer)
+  amount      Int
+  type        TransactionType
+  status      TransactionStatus @default(COMPLETED)
+  description String?
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  // Sender (null for DEPOSIT type)
+  senderId String? @map("sender_id")
+  sender   User?   @relation("SentTransactions", fields: [senderId], references: [id])
+
+  // Receiver
+  receiverId String @map("receiver_id")
+  receiver   User   @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DEPOSIT
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}

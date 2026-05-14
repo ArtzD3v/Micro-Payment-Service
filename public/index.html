@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AuraPay – Micro Payment Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --onyx:#0A0903;--evergreen:#141206;--dark-teal:#FF8200;--pine:#FF0000;--muted:#FFC100;
+  --text:#FFEAAE;--text-dim:#FFC100;--card:rgba(255,130,0,0.15);--border:rgba(255,193,0,0.15);
+  --radius:16px;--shadow:0 8px 32px rgba(10,9,3,0.8);
+}
+body{font-family:'Inter',sans-serif;background:var(--onyx);color:var(--text);min-height:100vh;overflow-x:hidden}
+/* ── BACKGROUND ART (AURAS) ── */
+.decor-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; pointer-events: none; animation: floatOrb 12s infinite ease-in-out alternate; opacity: 0.4; }
+.orb-1 { width: 45vw; height: 45vw; background: var(--dark-teal); top: -10%; left: -10%; }
+.orb-2 { width: 40vw; height: 40vw; background: var(--pine); bottom: -10%; right: -5%; animation-delay: -5s; }
+.orb-3 { width: 35vw; height: 35vw; background: var(--muted); top: 20%; right: 10%; animation-delay: -9s; opacity: 0.25; }
+.bg-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 50px 50px; z-index: -3; pointer-events: none; mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%); -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%); }
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, -50px) scale(1.1); }
+}
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+/* ── LOGIN ── */
+#screen-login{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at top,rgba(255,130,0,0.5) 0%,var(--onyx) 70%)}
+.login-box{background:rgba(255,130,0,0.15);border:1px solid rgba(255,193,0,0.2);backdrop-filter:blur(30px);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 16px 64px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1)}
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--pine),var(--muted));border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;color:var(--onyx)}
+.logo h1{font-size:28px;font-weight:800;letter-spacing:-1px}
+.logo span{color:var(--muted)}
+.login-box h2{font-size:18px;font-weight:600;margin-bottom:8px;text-align:center}
+.login-box p{color:var(--text-dim);font-size:14px;text-align:center;margin-bottom:28px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px 16px;background:rgba(20,18,6,0.6);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:.2s;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--pine);background:rgba(255,0,0,0.15)}
+select option{background:var(--evergreen)}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.25s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--pine),var(--dark-teal));color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:10px}
+.btn-outline:hover{border-color:var(--muted);color:var(--text)}
+/* ── APP LAYOUT ── */
+#screen-app{flex-direction:column;background:var(--onyx)}
+nav{background:rgba(20,18,6,0.95);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.nav-logo{font-size:20px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:8px}
+.nav-logo span{color:var(--muted)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--pine),var(--muted));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--onyx);background-size:cover;background-position:center;}
+#nav-username{font-size:14px;color:var(--text-dim);font-weight:500}
+.btn-sm{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,193,0,0.1);color:var(--muted);transition:.2s;display:flex;align-items:center;gap:6px}
+.btn-sm:hover{background:rgba(255,193,0,0.2);color:var(--text)}
+main{max-width:900px;margin:0 auto;padding:32px 24px;width:100%}
+/* ── BALANCE CARD ── */
+.balance-card{background:linear-gradient(135deg,var(--dark-teal) 0%,var(--pine) 60%,#CC0000 100%);border-radius:24px;padding:36px;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:0 16px 48px rgba(10,9,3,.7)}
+.balance-card::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:rgba(255,193,0,.08);border-radius:50%}
+.balance-card::after{content:'';position:absolute;bottom:-80px;left:-40px;width:200px;height:200px;background:rgba(20,18,6,.2);border-radius:50%}
+.balance-label{font-size:13px;font-weight:500;color:rgba(255,234,174,.7);margin-bottom:8px;position:relative;z-index:1}
+.balance-amount{font-size:48px;font-weight:800;letter-spacing:-2px;position:relative;z-index:1;margin-bottom:4px}
+.balance-cents{font-size:28px;font-weight:400;opacity:.7}
+.balance-id{font-size:12px;color:rgba(255,234,174,.5);font-family:monospace;position:relative;z-index:1;margin-top:4px}
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;position:relative;z-index:1}
+.qa-btn{background:rgba(20,18,6,.3);border:1px solid rgba(255,234,174,.15);border-radius:12px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:.25s;font-family:inherit;color:var(--text)}
+.qa-btn:hover{background:rgba(20,18,6,.5);border-color:rgba(255,234,174,.3);transform:translateY(-2px)}
+.qa-label{font-size:12px;font-weight:600;color:rgba(255,234,174,.9)}
+/* ── SECTION ── */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.section-title{font-size:16px;font-weight:700}
+/* ── USERS GRID ── */
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.user-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:.25s;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;}
+.user-card:hover{border-color:var(--pine);background:rgba(255,0,0,.2);transform:translateY(-2px)}
+.user-card .avatar{width:40px;height:40px;min-width:40px;font-size:16px}
+.user-info{flex:1;min-width:0}
+.user-info h4{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-info p{font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── TRANSACTIONS ── */
+.tx-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.tx-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;transition:.2s}
+.tx-item:hover{border-color:rgba(255,193,0,.3)}
+.tx-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tx-icon.deposit{background:rgba(255,193,0,.15);color:var(--muted)}
+.tx-icon.transfer-out{background:rgba(255,130,0,.3);color:#FFC100}
+.tx-icon.transfer-in{background:rgba(255,0,0,.2);color:var(--text)}
+.tx-body{flex:1;min-width:0}
+.tx-desc{font-size:14px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-date{font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.tx-amount{font-size:15px;font-weight:700;white-space:nowrap}
+.tx-amount.positive{color:#FFC100}
+.tx-amount.negative{color:#FF0000}
+.empty{text-align:center;padding:40px;color:var(--text-dim);font-size:14px}
+.load-more{width:100%;padding:12px;background:rgba(255,130,0,.2);border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-weight:600;cursor:pointer;transition:.2s;display:none;align-items:center;justify-content:center;gap:8px;margin-bottom:32px;}
+.load-more:hover{background:rgba(255,130,0,.4);color:var(--text);border-color:var(--pine)}
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(10,9,3,.85);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--evergreen);border:1px solid var(--border);border-radius:24px;padding:36px;width:100%;max-width:440px;box-shadow:var(--shadow);animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.modal-header h3{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.close-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;line-height:1;transition:.2s;display:flex;align-items:center;justify-content:center}
+.close-btn:hover{color:var(--text)}
+.modal .btn-primary{margin-top:8px}
+.hint{font-size:12px;color:var(--text-dim);margin-top:6px}
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:600;z-index:300;transform:translateY(80px);opacity:0;transition:.35s;max-width:320px;display:flex;align-items:center;gap:8px}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.success{background:rgba(255,193,0,0.2);border:1px solid #FFC100;color:#FFEAAE}
+#toast.error{background:rgba(255,0,0,0.2);border:1px solid #FF0000;color:#FF8200}
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:rgba(255,130,0,.2);border-radius:10px;padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:8px;border:none;border-radius:7px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;background:none;color:var(--text-dim);transition:.2s}
+.tab.active{background:var(--dark-teal);color:var(--text)}
+/* ── BADGE ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.completed{background:rgba(255,193,0,.15);color:#FFC100}
+.badge.pending{background:rgba(255,130,0,.1);color:#FF8200}
+/* PROFILE BIO */
+.profile-bio{font-size:13px;color:var(--text);margin-top:8px;font-style:italic;opacity:0.8;}
+
+/* ── CHAT WIDGET ── */
+.chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 150; display: flex; flex-direction: column; align-items: flex-end; }
+.chat-btn { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--pine), var(--dark-teal)); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(10,9,3,0.6); cursor: pointer; border: none; transition: .25s; }
+.chat-btn:hover { transform: scale(1.05); }
+.chat-window { width: 340px; height: 460px; background: var(--evergreen); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); display: none; flex-direction: column; overflow: hidden; margin-bottom: 16px; transform-origin: bottom right; animation: scaleIn .25s ease; }
+.chat-window.open { display: flex; }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+.chat-header { background: rgba(255,130,0,.3); padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.chat-header h4 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.chat-close { background: none; border: none; color: var(--text-dim); cursor: pointer; }
+.chat-close:hover { color: var(--text); }
+.chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+.chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
+.chat-msg.user { align-self: flex-end; background: var(--pine); color: #fff; border-bottom-right-radius: 4px; }
+.chat-msg.bot { align-self: flex-start; background: rgba(255,130,0,.3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+.chat-input-area { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: rgba(20,18,6,.5); }
+.chat-input-area input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid var(--border); background: rgba(255,130,0,.15); color: var(--text); outline: none; font-size: 13px; }
+.chat-input-area input:focus { border-color: var(--pine); }
+.chat-send { width: 36px; height: 36px; border-radius: 50%; background: var(--pine); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: .2s; }
+.chat-send:hover { background: var(--dark-teal); }
+.chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.typing-indicator { display: none; align-self: flex-start; background: none; color: var(--text-dim); font-size: 12px; font-style: italic; padding: 0 4px; }
+
+/* ── RESPONSIVE MOBILE TWEAKS ── */
+@media (max-width: 600px) {
+  /* Background Auras */
+  .orb-1, .orb-2, .orb-3 { filter: blur(60px); width: 80vw; height: 80vw; }
+  .bg-grid { background-size: 30px 30px; }
+  
+  /* Login */
+  .login-box { padding: 32px 20px; width: calc(100% - 32px); margin: 0 16px; border-radius: 20px; }
+  
+  /* Navbar */
+  nav { padding: 0 16px; }
+  .nav-logo { font-size: 18px; }
+  #nav-username { display: none; }
+  .btn-text { display: none; }
+  .btn-sm { padding: 8px; }
+  .avatar { width: 32px; height: 32px; font-size: 12px; }
+  
+  /* Layout */
+  main { padding: 24px 16px; }
+  
+  /* Balance Card */
+  .balance-card { padding: 24px; border-radius: 20px; margin-bottom: 20px; }
+  .balance-amount { font-size: 36px; }
+  .balance-cents { font-size: 20px; }
+  .balance-id { font-size: 10px; word-break: break-all; }
+  .qa-btn { padding: 12px 4px; gap: 6px; }
+  .qa-label { font-size: 11px; }
+  
+  /* Users Grid */
+  .users-grid { grid-template-columns: 1fr; }
+  
+  /* Transactions */
+  .tx-item { padding: 12px; gap: 10px; }
+  .tx-icon { width: 36px; height: 36px; }
+  .tx-amount { font-size: 14px; }
+  .tx-desc { font-size: 13px; }
+  
+  /* Modal */
+  .modal { padding: 24px 20px; width: calc(100% - 32px); border-radius: 20px; }
+  .modal-header h3 { font-size: 18px; }
+  
+  /* Toast */
+  #toast { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+
+  /* Chat Widget */
+  .chat-widget { bottom: 16px; right: 16px; z-index: 400; }
+  .chat-window { width: calc(100vw - 32px); height: calc(100vh - 120px); max-height: 500px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Background Auras & Grid -->
+<div class="bg-grid"></div>
+<div class="decor-orb orb-1"></div>
+<div class="decor-orb orb-2"></div>
+<div class="decor-orb orb-3"></div>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <div class="logo">
+      <div class="logo-icon"><i data-lucide="wallet"></i></div>
+      <h1>Aura<span>Pay</span></h1>
+    </div>
+    <!-- tabs -->
+    <div class="tabs" style="margin-bottom:24px">
+      <button class="tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="tab" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN TAB -->
+    <div id="auth-login">
+      <h2>Welcome back</h2>
+      <p style="margin-bottom:24px">Enter your credentials to continue</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="login-email" type="email" placeholder="ana@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="login-password" type="password" placeholder="••••••••"/>
+      </div>
+      <button class="btn btn-primary" onclick="loginUser()">Sign In <i data-lucide="arrow-right" size="18"></i></button>
+    </div>
+
+    <!-- REGISTER TAB -->
+    <div id="auth-register" style="display:none">
+      <h2>Create Account</h2>
+      <p style="margin-bottom:24px">Set up your AuraPay wallet</p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input id="reg-name" type="text" placeholder="Ana Silva"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="reg-email" type="email" placeholder="ana@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="reg-password" type="password" placeholder="••••••••"/>
+      </div>
+      <div class="form-group">
+        <label>Initial Balance (cents) <span style="color:var(--text-dim)">optional</span></label>
+        <input id="reg-balance" type="number" placeholder="0" min="0" max="100000"/>
+        <p class="hint">Max limit: 100000 = R$ 1000,00</p>
+      </div>
+      <button class="btn btn-primary" onclick="registerUser()">Create Account <i data-lucide="arrow-right" size="18"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP SCREEN ═══ -->
+<div id="screen-app" class="screen">
+  <nav>
+    <div class="nav-logo"><i data-lucide="flame" size="24" color="var(--pine)"></i> Aura<span>Pay</span></div>
+    <div class="nav-right">
+      <span id="nav-username"></span>
+      <div class="avatar" id="nav-avatar"></div>
+      <button class="btn-sm" onclick="openModal('modal-settings')"><i data-lucide="settings" size="16"></i> <span class="btn-text">Settings</span></button>
+      <button class="btn-sm" onclick="logout()"><i data-lucide="log-out" size="16"></i></button>
+    </div>
+  </nav>
+  <main>
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div class="balance-amount" id="balance-display">R$ 0<span class="balance-cents">,00</span></div>
+      <div class="balance-id" id="balance-uid"></div>
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="openModal('modal-deposit')">
+          <i data-lucide="arrow-down-circle" size="24" class="qa-icon"></i>
+          <span class="qa-label">Add Money</span>
+        </button>
+        <button class="qa-btn" onclick="openModal('modal-transfer')">
+          <i data-lucide="send" size="24" class="qa-icon"></i>
+          <span class="qa-label">Send</span>
+        </button>
+        <button class="qa-btn" onclick="loadData()">
+          <i data-lucide="refresh-cw" size="24" class="qa-icon"></i>
+          <span class="qa-label">Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="section-header">
+      <span class="section-title">People</span>
+      <span id="users-count" style="font-size:13px;color:var(--text-dim)"></span>
+    </div>
+    <div class="users-grid" id="users-grid"></div>
+    <button id="btn-more-users" class="load-more" onclick="loadMoreUsers()"><i data-lucide="chevron-down" size="16"></i> Load More People</button>
+
+    <!-- Transactions -->
+    <div class="section-header" style="margin-top:16px;">
+      <span class="section-title">Transaction History</span>
+      <span id="tx-count" style="font-size:13px;color:var(--text-dim)"></span>
+    </div>
+    <div class="tx-list" id="tx-list"></div>
+    <button id="btn-more-tx" class="load-more" onclick="loadMoreTransactions()"><i data-lucide="chevron-down" size="16"></i> Load Older Transactions</button>
+  </main>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<!-- Deposit -->
+<div class="overlay" id="modal-deposit">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i data-lucide="arrow-down-circle" size="24"></i> Add Money</h3>
+      <button class="close-btn" onclick="closeModal('modal-deposit')"><i data-lucide="x" size="24"></i></button>
+    </div>
+    <div class="form-group">
+      <label>Amount (in cents)</label>
+      <input id="dep-amount" type="number" placeholder="5000" min="1"/>
+      <p class="hint" id="dep-hint">≈ R$ 0,00</p>
+    </div>
+    <div class="form-group">
+      <label>Description <span style="color:var(--text-dim)">optional</span></label>
+      <input id="dep-desc" type="text" placeholder="Salary, allowance…"/>
+    </div>
+    <button class="btn btn-primary" onclick="doDeposit()">Confirm Deposit <i data-lucide="check" size="18"></i></button>
+  </div>
+</div>
+
+<!-- Transfer -->
+<div class="overlay" id="modal-transfer">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i data-lucide="send" size="24"></i> Send Money</h3>
+      <button class="close-btn" onclick="closeModal('modal-transfer')"><i data-lucide="x" size="24"></i></button>
+    </div>
+    <div class="form-group">
+      <label>Recipient</label>
+      <select id="trf-receiver"></select>
+    </div>
+    <div class="form-group">
+      <label>Amount (in cents)</label>
+      <input id="trf-amount" type="number" placeholder="1000" min="1"/>
+      <p class="hint" id="trf-hint">≈ R$ 0,00</p>
+    </div>
+    <div class="form-group">
+      <label>Description <span style="color:var(--text-dim)">optional</span></label>
+      <input id="trf-desc" type="text" placeholder="Dinner, rent split…"/>
+    </div>
+    <button class="btn btn-primary" onclick="doTransfer()">Send Money <i data-lucide="check" size="18"></i></button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="modal-settings">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i data-lucide="user" size="24"></i> Profile Settings</h3>
+      <button class="close-btn" onclick="closeModal('modal-settings')"><i data-lucide="x" size="24"></i></button>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input id="set-name" type="text"/>
+    </div>
+    <div class="form-group">
+      <label>Bio <span style="color:var(--text-dim)">optional</span></label>
+      <textarea id="set-bio" rows="3" placeholder="Tell people about yourself..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Avatar URL <span style="color:var(--text-dim)">optional</span></label>
+      <input id="set-avatar" type="url" placeholder="https://example.com/avatar.jpg"/>
+    </div>
+    <button class="btn btn-primary" onclick="saveProfile()">Save Changes <i data-lucide="save" size="18"></i></button>
+  </div>
+</div>
+
+<!-- Chat Widget -->
+<div class="chat-widget" id="chat-widget" style="display:none;">
+  <div class="chat-window" id="chat-window">
+    <div class="chat-header">
+      <h4><i data-lucide="bot" size="18"></i> AuraBot</h4>
+      <button class="chat-close" onclick="toggleChat()"><i data-lucide="x" size="18"></i></button>
+    </div>
+    <div class="chat-body" id="chat-body">
+      <div class="chat-msg bot">Hi! I'm your AI assistant. How can I help you today?</div>
+      <div class="typing-indicator" id="chat-typing">AuraBot is thinking...</div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Type your message..." onkeypress="if(event.key==='Enter') sendChatMessage()"/>
+      <button class="chat-send" id="chat-send-btn" onclick="sendChatMessage()"><i data-lucide="send" size="16"></i></button>
+    </div>
+  </div>
+  <button class="chat-btn" onclick="toggleChat()">
+    <i data-lucide="message-circle" size="24"></i>
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Initialize Lucide icons
+lucide.createIcons();
+
+const API = '/api/v1';
+let currentUser = null;
+
+// Pagination state
+let allUsers = [];
+let usersPage = 1;
+let usersTotalPages = 1;
+
+let allTransactions = [];
+let txPage = 1;
+let txTotalPages = 1;
+
+// Helper for auth headers
+function getHeaders() {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.querySelectorAll('.tabs .tab').forEach((t,i)=>t.classList.toggle('active', (tab==='login'?i===0:i===1)));
+  document.getElementById('auth-login').style.display = tab==='login'?'':'none';
+  document.getElementById('auth-register').style.display = tab==='register'?'':'none';
+  
+  // Clear inputs when switching for security
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-balance').value = '';
+}
+
+async function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if(!email || !password){toast('Email and password required','error');return;}
+  try{
+    const r=await fetch(`${API}/auth/login`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email, password})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||'Login failed');
+    localStorage.setItem('token', d.data.token);
+    currentUser = d.data.user;
+    toast(`Welcome back, ${currentUser.name}!`, 'success');
+    enterApp();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function registerUser() {
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const password=document.getElementById('reg-password').value;
+  const bal=parseInt(document.getElementById('reg-balance').value||'0');
+  
+  if(!name||!email||!password){toast('Name, email, and password are required','error');return;}
+  if(bal > 100000){toast('Initial balance cannot exceed R$ 1000,00','error');return;}
+  
+  try{
+    const r=await fetch(`${API}/users`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,email,password,initialBalance:bal||0})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||'Registration failed');
+    toast(`Account created! Please log in.`,'success');
+    switchAuthTab('login');
+    document.getElementById('login-email').value = email;
+    document.getElementById('reg-password').value = '';
+  }catch(e){toast(e.message,'error');}
+}
+
+function enterApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('chat-widget').style.display = 'flex';
+  loadData();
+}
+
+function logout(){
+  currentUser=null;
+  localStorage.removeItem('token');
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('chat-widget').style.display = 'none';
+  document.getElementById('login-password').value = '';
+}
+
+// Check session on load
+window.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const r = await fetch(`${API}/users/me`, { headers: getHeaders() });
+      if (r.ok) {
+        const d = await r.json();
+        currentUser = d.data;
+        enterApp();
+      } else {
+        logout();
+      }
+    } catch(e) {
+      logout();
+    }
+  }
+});
+
+// ── DATA & PAGINATION ─────────────────────────────────────────────────────────
+async function loadData() {
+  await fetchCurrentUser();
+  
+  // Reset pagination state
+  usersPage = 1;
+  txPage = 1;
+  allUsers = [];
+  allTransactions = [];
+  
+  await Promise.all([
+    fetchUsers(1),
+    fetchTransactions(1)
+  ]);
+}
+
+async function fetchCurrentUser() {
+  try {
+    const r = await fetch(`${API}/users/me`, { headers: getHeaders() });
+    if(r.status === 401) { logout(); toast('Session expired', 'error'); return; }
+    const d = await r.json();
+    currentUser = d.data;
+    renderCurrentUser();
+  } catch(e) { console.error(e); }
+}
+
+async function fetchUsers(page) {
+  try {
+    const r = await fetch(`${API}/users?page=${page}&limit=10`, { headers: getHeaders() });
+    const d = await r.json();
+    if(page === 1) allUsers = d.data;
+    else allUsers = [...allUsers, ...d.data];
+    
+    usersTotalPages = d.meta.totalPages;
+    usersPage = d.meta.page;
+    
+    document.getElementById('users-count').textContent = `${d.meta.total} user(s)`;
+    document.getElementById('btn-more-users').style.display = (usersPage < usersTotalPages) ? 'flex' : 'none';
+    
+    renderUsers();
+    updateTransferSelect();
+  } catch(e) { console.error('Failed to fetch users', e); }
+}
+
+async function fetchTransactions(page) {
+  try {
+    const r = await fetch(`${API}/transactions/user/${currentUser.id}?page=${page}&limit=10`, { headers: getHeaders() });
+    const d = await r.json();
+    if(page === 1) allTransactions = d.data;
+    else allTransactions = [...allTransactions, ...d.data];
+    
+    txTotalPages = d.meta.totalPages;
+    txPage = d.meta.page;
+    
+    document.getElementById('tx-count').textContent = `${d.meta.total} transaction(s)`;
+    document.getElementById('btn-more-tx').style.display = (txPage < txTotalPages) ? 'flex' : 'none';
+    
+    renderTransactions();
+  } catch(e) { console.error('Failed to fetch transactions', e); }
+}
+
+function loadMoreUsers() {
+  if(usersPage < usersTotalPages) fetchUsers(usersPage + 1);
+}
+
+function loadMoreTransactions() {
+  if(txPage < txTotalPages) fetchTransactions(txPage + 1);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderCurrentUser(){
+  document.getElementById('nav-username').textContent = currentUser.name;
+  
+  const navAvatar = document.getElementById('nav-avatar');
+  if (currentUser.avatarUrl) {
+    navAvatar.style.backgroundImage = `url('${escHtml(currentUser.avatarUrl)}')`;
+    navAvatar.textContent = '';
+  } else {
+    navAvatar.style.backgroundImage = 'linear-gradient(135deg,var(--pine),var(--muted))';
+    navAvatar.textContent = currentUser.name[0].toUpperCase();
+  }
+  
+  const [r,c]=(currentUser.balance/100).toFixed(2).split('.');
+  const fmt=parseInt(r).toLocaleString('pt-BR');
+  document.getElementById('balance-display').innerHTML=`R$ ${fmt}<span class="balance-cents">,${c}</span>`;
+  document.getElementById('balance-uid').textContent=`ID: ${currentUser.id}`;
+}
+
+function renderUsers(){
+  const others=allUsers.filter(u=>u.id!==currentUser.id);
+  const g=document.getElementById('users-grid');
+  if(!others.length){g.innerHTML='<p class="empty">No other users yet.</p>';return;}
+  g.innerHTML=others.map(u=>{
+    const avatarContent = u.avatarUrl 
+      ? `<div class="avatar" style="background-image:url('${escHtml(u.avatarUrl)}')"></div>` 
+      : `<div class="avatar">${u.name[0].toUpperCase()}</div>`;
+      
+    const bioContent = u.bio ? `<div class="profile-bio">${escHtml(u.bio)}</div>` : '';
+    
+    return `
+    <div class="user-card" onclick="quickSend('${u.id}','${escHtml(u.name)}')">
+      ${avatarContent}
+      <div class="user-info">
+        <h4>${escHtml(u.name)}</h4>
+        <p>${escHtml(u.email)}</p>
+        ${bioContent}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTransactions(){
+  const txs = allTransactions;
+  const el=document.getElementById('tx-list');
+  if(!txs.length){el.innerHTML='<p class="empty">No transactions yet.<br>Make your first deposit!</p>';return;}
+  el.innerHTML=txs.map(t=>{
+    const isDeposit=t.type==='DEPOSIT';
+    const isSender=t.senderId===currentUser.id;
+    let iconName,cls,sign,iconCls;
+    if(isDeposit){iconName='arrow-down-to-line';cls='positive';sign='+';iconCls='deposit';}
+    else if(isSender){iconName='arrow-up-right';cls='negative';sign='-';iconCls='transfer-out';}
+    else{iconName='arrow-down-left';cls='positive';sign='+';iconCls='transfer-in';}
+    const amt=(t.amount/100).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    const date=new Date(t.createdAt).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return`<div class="tx-item">
+      <div class="tx-icon ${iconCls}"><i data-lucide="${iconName}" size="20"></i></div>
+      <div class="tx-body">
+        <div class="tx-desc">${escHtml(t.description||t.type)}</div>
+        <div class="tx-date">${date} &nbsp;<span class="badge completed">${t.status}</span></div>
+      </div>
+      <div class="tx-amount ${cls}">${sign}R$ ${amt}</div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function updateTransferSelect() {
+  const others=allUsers.filter(u=>u.id!==currentUser.id);
+  const sel=document.getElementById('trf-receiver');
+  if(sel) sel.innerHTML=others.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────────────────────
+async function doDeposit(){
+  const amount=parseInt(document.getElementById('dep-amount').value);
+  const description=document.getElementById('dep-desc').value.trim()||'Deposit';
+  if(!amount||amount<1){toast('Enter a valid amount','error');return;}
+  try{
+    const r=await fetch(`${API}/transactions/deposit`,{
+      method:'POST',
+      headers: getHeaders(),
+      body:JSON.stringify({amount,description})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||'Error');
+    toast(`R$ ${(amount/100).toFixed(2)} added successfully!`,'success');
+    closeModal('modal-deposit');
+    document.getElementById('dep-amount').value='';
+    document.getElementById('dep-desc').value='';
+    loadData();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function doTransfer(){
+  const receiverId=document.getElementById('trf-receiver').value;
+  const amount=parseInt(document.getElementById('trf-amount').value);
+  const description=document.getElementById('trf-desc').value.trim()||'Transfer';
+  if(!receiverId){toast('Select a recipient','error');return;}
+  if(!amount||amount<1){toast('Enter a valid amount','error');return;}
+  try{
+    const r=await fetch(`${API}/transactions/transfer`,{
+      method:'POST',
+      headers: getHeaders(),
+      body:JSON.stringify({receiverId,amount,description})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||'Error');
+    toast(`R$ ${(amount/100).toFixed(2)} sent!`,'success');
+    closeModal('modal-transfer');
+    document.getElementById('trf-amount').value='';
+    document.getElementById('trf-desc').value='';
+    loadData();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function saveProfile() {
+  const name = document.getElementById('set-name').value.trim();
+  const bio = document.getElementById('set-bio').value.trim();
+  const avatarUrl = document.getElementById('set-avatar').value.trim();
+  
+  const payload = {};
+  if (name) payload.name = name;
+  if (bio) payload.bio = bio;
+  if (avatarUrl) payload.avatarUrl = avatarUrl;
+  
+  try {
+    const r = await fetch(`${API}/users/me`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Failed to update profile');
+    
+    toast('Profile updated successfully!', 'success');
+    closeModal('modal-settings');
+    loadData();
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+function quickSend(id,name){
+  openModal('modal-transfer');
+  const sel=document.getElementById('trf-receiver');
+  if(sel)sel.value=id;
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id){
+  if(id==='modal-settings' && currentUser){
+    document.getElementById('set-name').value = currentUser.name || '';
+    document.getElementById('set-bio').value = currentUser.bio || '';
+    document.getElementById('set-avatar').value = currentUser.avatarUrl || '';
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{
+  if(e.target===o) o.classList.remove('open');
+}));
+
+// live hints
+['dep-amount','trf-amount'].forEach(id=>{
+  const el=document.getElementById(id);
+  const hint=document.getElementById(id==='dep-amount'?'dep-hint':'trf-hint');
+  el.addEventListener('input',()=>{
+    const v=parseInt(el.value)||0;
+    hint.textContent=`≈ R$ ${(v/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  });
+});
+
+// ── CHAT WIDGET ──────────────────────────────────────────────────────────────
+function toggleChat() {
+  document.getElementById('chat-window').classList.toggle('open');
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  const body = document.getElementById('chat-body');
+  const typing = document.getElementById('chat-typing');
+  const btn = document.getElementById('chat-send-btn');
+  
+  const userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg user';
+  userDiv.textContent = msg;
+  body.insertBefore(userDiv, typing);
+  
+  input.value = '';
+  setTimeout(() => body.scrollTop = body.scrollHeight, 10);
+  
+  typing.style.display = 'block';
+  input.disabled = true;
+  btn.disabled = true;
+  
+  try {
+    const r = await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ prompt: msg })
+    });
+    const d = await r.json();
+    
+    const botDiv = document.createElement('div');
+    botDiv.className = 'chat-msg bot';
+    if (!r.ok) {
+      botDiv.textContent = d.message || "Sorry, I'm having trouble connecting right now.";
+      botDiv.style.color = '#FF8200';
+    } else {
+      botDiv.innerHTML = escHtml(d.data).replace(/\n/g, '<br>');
+    }
+    body.insertBefore(botDiv, typing);
+  } catch (e) {
+    const botDiv = document.createElement('div');
+    botDiv.className = 'chat-msg bot';
+    botDiv.textContent = "Error: Could not reach the server.";
+    body.insertBefore(botDiv, typing);
+  } finally {
+    typing.style.display = 'none';
+    input.disabled = false;
+    btn.disabled = false;
+    input.focus();
+    setTimeout(() => body.scrollTop = body.scrollHeight, 10);
+    lucide.createIcons();
+  }
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<i data-lucide="${type==='success'?'check-circle':'alert-circle'}" size="18"></i> ${escHtml(msg)}`;
+  t.className=`show ${type}`;
+  lucide.createIcons();
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.className='',3200);
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
