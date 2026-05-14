@@ -1,0 +1,65 @@
+MicroPayment Service
+A robust and scalable backend service for handling micro-transactions, user accounts, and financial operations. This project is built using Node.js and TypeScript, strictly adhering to Clean Architecture principles to ensure maintainability, testability, and a clear separation of concerns.
+
+ Features
+User Management: Create accounts, update profiles, and secure authentication (Login).
+
+Financial Operations: * Deposit: Add funds to the user's digital wallet.
+
+Transfer: Securely transfer funds between users within the platform.
+
+AI Integration: Modular infrastructure ready for AI-powered features (via the infrastructure/ai module).
+
+Database Management: Structured and safe data modeling using Prisma ORM.
+
+🛠️ Tech Stack
+Language: TypeScript
+
+Runtime Environment: Node.js
+
+ORM: Prisma
+
+Architecture: Clean Architecture / Domain-Driven Design (DDD) concepts
+
+Containerization: Docker & Docker Compose
+
+ Project Structure
+The project follows a modular Clean Architecture approach:
+
+src/domain/: Contains enterprise business rules, entities, and domain interfaces.
+
+src/application/use-cases/: Application-specific business rules (e.g., deposit.use-case.ts, transfer.use-case.ts).
+
+src/infrastructure/: Frameworks, drivers, and external tools (Database connections, HTTP servers, AI integrations, Repositories).
+
+src/main/: The composition root where all dependencies are injected and the application is bootstrapped.
+
+ Getting Started
+Prerequisites
+Make sure you have Docker and Docker Compose installed on your machine.
+
+Installation
+Clone the repository:
+
+Bash
+git clone https://github.com/your-username/micropayment-service.git
+cd micropayment-service
+Set up your environment variables:
+Copy the .env.example file to create your .env file and fill in your database credentials and API keys.
+
+Bash
+cp .env.example .env
+Start the application and database using Docker:
+
+Bash
+docker-compose up -d
+Install dependencies locally (optional, for development):
+
+Bash
+npm install
+Run Prisma migrations to set up your database schema:
+
+Bash
+npx prisma migrate dev
+ License
+This project is licensed under the MIT License.
